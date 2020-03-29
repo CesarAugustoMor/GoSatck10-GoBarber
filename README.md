@@ -1,2 +1,2 @@
-# GoSatck10-Modulo02
-Modulo 2 desenvolvido durante o curso GoStack Disponibilizado pela RocketSeat
+# GoSatck10-GoBarber
+Modulo 2 e 3 desenvolvido durante o curso GoStack Disponibilizado pela RocketSeat
