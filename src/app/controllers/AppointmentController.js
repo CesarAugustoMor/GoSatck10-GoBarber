@@ -1,9 +1,11 @@
 import * as Yup from 'yup';
-import { startOfHour, parseISO, isBefore } from 'date-fns';
+import { startOfHour, parseISO, isBefore, format } from 'date-fns';
+import pt from 'date-fns/locale/pt-BR';
 
 import User from '../models/User';
 import File from '../models/File';
 import Appointment from '../models/Appointment';
+import Notification from '../schemas/Notification';
 
 class AppointmentController {
   async index(req, res) {
@@ -50,25 +52,32 @@ class AppointmentController {
     /**
      * Verifica se é um prestador
      **/
-    if (
-      !(await User.findOne({
-        where: { id: provider_id, provider: true },
-      }))
-    ) {
-      return res
-        .status(401)
-        .json({ erro: 'Você só pode criar agendamentos com Prestadores.' });
+    const prestador = await User.findOne({
+      where: { id: provider_id, provider: true },
+    });
+    if (!prestador) {
+      return res.status(401).json({
+        erro: 'Você só pode criar agendamentos com Prestadores.',
+      });
     }
 
+    /**
+     * Verifica se um prestador está marcando um horaio com o próprio.
+     **/
+    if (prestador.id === req.userId) {
+      return res.status(401).json({
+        erro: 'Você não pode agendar um horario com você.',
+      });
+    }
     /**
      * verifica agendamento no passado.
      */
     const hourStart = startOfHour(parseISO(date));
 
     if (isBefore(hourStart, new Date())) {
-      return res
-        .status(400)
-        .json({ erro: 'Datas no passado não são permitidas.' });
+      return res.status(400).json({
+        erro: 'Datas no passado não são permitidas.',
+      });
     }
 
     /**
@@ -78,16 +87,32 @@ class AppointmentController {
     if (
       await Appointment.findOne({
         where: {
-          providers_id,
+          provider_id,
           canceled_at: null,
-          data: hourStart,
+          date: hourStart,
         },
       })
     ) {
-      return res
-        .status(400)
-        .json({ erro: 'Data de agendamento não disponivel.' });
+      return res.status(400).json({
+        erro: 'Data de agendamento não disponivel.',
+      });
     }
+    /**
+     * Notificar prestador de serviço
+     */
+
+    const user = await User.findByPk(req.userId);
+    const formattedDate = format(
+      hourStart,
+      "'dia' dd 'de' MMMM', às' H:mm'h'",
+      { locale: pt }
+    );
+
+    console.log('----------------------------');
+    await Notification.create({
+      content: `Novo agendamento de ${user.name}para ${formattedDate}`,
+      user: provider_id,
+    });
 
     return res.json(
       await Appointment.create({
