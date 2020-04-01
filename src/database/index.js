@@ -24,14 +24,11 @@ class Database {
   }
 
   mongo() {
-    this.mongoConnection = Mongoose.connect(
-      'mongodb+srv://gobarber:gobarber@cluster0-1lgke.gcp.mongodb.net/gobarber?retryWrites=true&w=majority',
-      {
-        useNewUrlParser: true,
-        useFindAndModify: true,
-        useUnifiedTopology: true,
-      }
-    );
+    this.mongoConnection = Mongoose.connect(process.env.MONGO_URL, {
+      useNewUrlParser: true,
+      useFindAndModify: true,
+      useUnifiedTopology: true,
+    });
   }
 }
 
