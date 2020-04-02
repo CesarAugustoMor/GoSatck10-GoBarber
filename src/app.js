@@ -10,7 +10,6 @@ import routes from './routes';
 import SentryConfig from './config/sentry';
 
 import './database';
-import { next } from 'sucrase/dist/parser/tokenizer';
 
 class App {
   constructor() {
